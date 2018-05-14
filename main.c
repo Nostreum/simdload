@@ -4,9 +4,12 @@
 #include <stdio.h>
 #include <stdint.h>
 
-typedef float float_a __attribute__ ((aligned(4)));
+#define SIMD_ALIGNMENT 4
 
-void sum_loadu(float_a **m, int size){
+typedef float float_a __attribute__ ((aligned(SIMD_ALIGNMENT))); // Aligned float for simd 
+
+/* Unaligned load */
+void sum_loadu(float **m, int size){
 
   __m128 sum = _mm_set_ps1(0.0f);
 
@@ -18,7 +21,8 @@ void sum_loadu(float_a **m, int size){
   }
 }
 
-void sum_load(float **m, int size){
+/* Aligned load */
+void sum_load(float_a **m, int size){
 
   __m128 sum = _mm_set_ps1(0.0f);
 
@@ -30,12 +34,14 @@ void sum_load(float **m, int size){
   }
 }
 
+/* Compute time in ns */
 uint64_t compute_time(struct timespec t1, struct timespec t2){
 
   return ( t2.tv_nsec - t1.tv_nsec ) + ( t2.tv_sec - t1.tv_sec ) * 1000000000L;
 
 }
 
+/* Launch a test and return mean compute time */
 uint64_t start_test(void (*callback)(float_a **, int), float_a **m, int size, int nb_test){
 
   struct timespec t1, t2;
@@ -48,6 +54,7 @@ uint64_t start_test(void (*callback)(float_a **, int), float_a **m, int size, in
   return compute_time(t1, t2) / nb_test;
 }
 
+/* Entry point */
 int main(int argc, char *argv[]){
 
   uint64_t loadu_t, load_t;
@@ -81,3 +88,5 @@ int main(int argc, char *argv[]){
 
   return 0;
 }
+
+/* End */
